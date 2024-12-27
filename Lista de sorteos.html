@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteo de Números</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { max-width: 800px; margin: auto; padding: 20px; }
+        input, button { margin: 5px 0; }
+        .participant { border-bottom: 1px solid #ccc; padding: 5px 0; }
+        .number-list, .unassigned-numbers { margin: 10px 0; }
+        .search { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sorteo de Números</h1>
+        <div>
+            <input type="number" id="number" placeholder="Número (0-99)" min="0" max="99" required>
+            <input type="text" id="name" placeholder="Nombre" required>
+            <input type="text" id="phone" placeholder="Número Telefónico (Opcional)">
+            <button onclick="addParticipant()">Agregar Participante</button>
+        </div>
+        <div class="search">
+            <input type="text" id="searchName" placeholder="Buscar por nombre" oninput="searchParticipantByName()">
+            <input type="number" id="searchNumber" placeholder="Buscar por número" oninput="searchParticipantByNumber()">
+        </div>
+        <div id="participants"></div>
+        <button onclick="deleteAllParticipants()">Eliminar Todos los Participantes</button>
+        <div id="unassignedNumbers"></div>
+    </div>
+
+    <script>
+        let participants = JSON.parse(localStorage.getItem('participants')) || [];
+
+        function addParticipant() {
+            const number = document.getElementById('number').value;
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+
+            if (!number || !name) {
+                alert('El número y el nombre son obligatorios.');
+                return;
+            }
+
+            const isNumberAssigned = participants.some(p => p.numbers.includes(parseInt(number)));
+            if (isNumberAssigned) {
+                alert('No seas mogólico, ya le diste ese número a alguien.');
+                return;
+            }
+
+            const participantIndex = participants.findIndex(p => p.name === name);
+            if (participantIndex > -1) {
+                participants[participantIndex].numbers.push(parseInt(number));
+                if (phone) participants[participantIndex].phone = phone;
+            } else {
+                participants.push({ name, phone, numbers: [parseInt(number)] });
+            }
+
+            localStorage.setItem('participants', JSON.stringify(participants));
+            renderParticipants();
+            renderUnassignedNumbers();
+            clearForm();
+        }
+
+        function renderParticipants(searchName = '', searchNumber = '') {
+            const participantsDiv = document.getElementById('participants');
+            participantsDiv.innerHTML = '';
+
+            let filteredParticipants = [...participants];
+            if (searchName) {
+                filteredParticipants = filteredParticipants.filter(p => p.name.toLowerCase().includes(searchName.toLowerCase()));
+            }
+            if (searchNumber) {
+                filteredParticipants = filteredParticipants.filter(p => p.numbers.includes(parseInt(searchNumber)));
+            }
+
+            const sortedParticipants = filteredParticipants.sort((a, b) => Math.min(...a.numbers) - Math.min(...b.numbers));
+
+            sortedParticipants.forEach((participant, index) => {
+                const div = document.createElement('div');
+                div.className = 'participant';
+                div.innerHTML = `
+                    <strong>${participant.name}</strong> (${participant.phone || 'No phone'}) - Números: ${participant.numbers.sort((a, b) => a - b).join(', ')}
+                    <button onclick="editParticipant(${index})">Editar</button>
+                `;
+                participantsDiv.appendChild(div);
+            });
+        }
+
+        function renderUnassignedNumbers() {
+            const unassignedNumbersDiv = document.getElementById('unassignedNumbers');
+            unassignedNumbersDiv.innerHTML = '<strong>Números No Asignados:</strong><br>';
+            const assignedNumbers = participants.flatMap(p => p.numbers);
+            const unassignedNumbers = Array.from({ length: 100 }, (_, i) => i).filter(n => !assignedNumbers.includes(n));
+            unassignedNumbersDiv.innerHTML += unassignedNumbers.join(', ');
+        }
+
+        function editParticipant(index) {
+            const participant = participants[index];
+            const newNumber = prompt('Nuevo número (separado por comas para múltiples números):', participant.numbers.join(', '));
+            const newName = prompt('Nuevo nombre:', participant.name);
+            const newPhone = prompt('Nuevo teléfono (Opcional):', participant.phone);
+
+            if (!newName || !newNumber) {
+                alert('El número y el nombre son obligatorios.');
+                return;
+            }
+
+            const newNumbers = newNumber.split(',').map(Number);
+
+            if (newNumbers.some(n => participants.some(p => p.numbers.includes(n) && p !== participant))) {
+                alert('Uno o más números ingresados ya están en uso.');
+                return;
+            }
+
+            participants[index] = { name: newName, phone: newPhone, numbers: newNumbers };
+            localStorage.setItem('participants', JSON.stringify(participants));
+            renderParticipants();
+            renderUnassignedNumbers();
+        }
+
+        function deleteAllParticipants() {
+            if (confirm('¿Estás seguro de que deseas eliminar todos los participantes?')) {
+                if (confirm('¿Realmente estás seguro? Esta acción no se puede deshacer.')) {
+                    participants = [];
+                    localStorage.setItem('participants', JSON.stringify(participants));
+                    renderParticipants();
+                    renderUnassignedNumbers();
+                }
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('number').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('phone').value = '';
+        }
+
+        function searchParticipantByName() {
+            const searchName = document.getElementById('searchName').value;
+            renderParticipants(searchName, document.getElementById('searchNumber').value);
+        }
+
+        function searchParticipantByNumber() {
+            const searchNumber = document.getElementById('searchNumber').value;
+            renderParticipants(document.getElementById('searchName').value, searchNumber);
+        }
+
+        renderParticipants();
+        renderUnassignedNumbers();
+    </script>
+</body>
+</html>

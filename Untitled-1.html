@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recta Numérica</title>
+<style>
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  canvas {
+    border: 1px solid #000;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="numLine"></canvas>
+
+<script>
+  const canvas = document.getElementById('numLine');
+  const ctx = canvas.getContext('2d');
+
+  // Establece el tamaño del canvas
+  canvas.width = 800;
+  canvas.height = 200;
+
+  // Dibuja la línea base
+  ctx.beginPath();
+  ctx.moveTo(50, canvas.height / 2);
+  ctx.lineTo(canvas.width - 50, canvas.height / 2);
+  ctx.stroke();
+
+  // Función para graficar un número
+  function plotNumber(number) {
+    // Calcula la posición en el canvas
+    const x = (number + 10) * (canvas.width - 100) / 20 + 50;
+    const y = canvas.height / 2;
+    
+    // Dibuja el punto
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, 2 * Math.PI);
+    ctx.fillText(number, x - 3, y + 4); // Ajusta el texto según el tamaño del número
+    ctx.fill();
+  }
+
+  // Ejemplo de uso
+  const numbers = [-10, -5, 0, 5, 10];
+  numbers.forEach(plotNumber);
+</script>
+
+</body>
+</html>

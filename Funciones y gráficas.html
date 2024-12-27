@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resuelve tus Funciones</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .graph {
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Resuelve tus Funciones</h1>
+        <p>Ingresa la ecuación de la función para obtener su gráfica y la solución.</p>
+        
+        <h2>Ingresa tu Función</h2>
+        <input type="text" id="functionInput" placeholder="Ej. 2*x + 3, x^2 - 4*x + 3, 2^x, sin(x)">
+        <button onclick="solveFunction()">Resolver</button>
+        
+        <h3>Resultado</h3>
+        <div id="solution"></div>
+        <div id="graph" class="graph"></div>
+    </div>
+
+    <script>
+        function solveFunction() {
+            const input = document.getElementById('functionInput').value;
+            const solutionDiv = document.getElementById('solution');
+            const graphDiv = document.getElementById('graph');
+
+            try {
+                // Limpiar áreas de resultado
+                solutionDiv.innerHTML = '';
+                graphDiv.innerHTML = '';
+
+                // Procesar la función
+                const expr = math.compile(input);
+                const xValues = math.range(-10, 10, 0.1).toArray();
+                const yValues = xValues.map(x => expr.evaluate({x: x}));
+
+                // Mostrar el proceso y la gráfica
+                solutionDiv.innerHTML = `
+                    <p><strong>Función ingresada:</strong> \\(${math.parse(input).toTex()}\\)</p>
+                    <p><strong>Dominio:</strong> Todos los números reales</p>
+                    <p><strong>Rango:</strong> Calculado a partir de los valores de x</p>
+                `;
+                MathJax.typeset();
+
+                // Graficar la función
+                const trace = {
+                    x: xValues,
+                    y: yValues,
+                    mode: 'lines',
+                    type: 'scatter'
+                };
+                const layout = {
+                    title: `Gráfica de \\(${math.parse(input).toTex()}\\)`,
+                    xaxis: {title: 'x'},
+                    yaxis: {title: 'f(x)'}
+                };
+                Plotly.newPlot(graphDiv, [trace], layout);
+
+            } catch (error) {
+                solutionDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
